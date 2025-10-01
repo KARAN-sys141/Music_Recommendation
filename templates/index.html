@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recommendations</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #121212;
+      color: #F1F1F1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #00ADB5, #008080);
+      padding: 2rem;
+      text-align: center;
+      font-size: 2.5rem;
+      color: #F1F1F1;
+      letter-spacing: 1px;
+      user-select: none;
+    }
+
+    main {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #controls {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    input,
+    select,
+    button {
+      padding: 16px;
+      font-size: 1.05rem;
+      border-radius: 10px;
+      border: 2px solid #00FFEE;
+      background: #1E1E1E;
+      color: #F1F1F1;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.3s ease;
+      outline: none;
+      cursor: pointer;
+    }
+
+    #songInput {
+      flex: 3;
+    }
+
+    #artistInput {
+      flex: 2;
+    }
+
+    #kValue,
+    #filtering {
+      flex: 1;
+      text-align: center;
+    }
+
+    button {
+      flex: 1;
+      background: linear-gradient(to right, #00ADB5, #00FFEE);
+      color: #121212;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      border-color: #00FFEE;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #00FFEE, #00ADB5);
+      transform: scale(1.04);
+    }
+
+    input:focus,
+    select:focus,
+    button:focus {
+      border-color: #00FFE0;
+      background-color: #2A2A2A;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg fill='white' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px 16px;
+      padding-right: 30px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+    }
+
+    #output {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 0 20px;
+    }
+
+    .song-block {
+      background: #1E272E;
+      padding: 1.5rem;
+      width: 100%;
+      border-left: 6px solid #00ADB5;
+      border-radius: 10px;
+    }
+
+    .song-block h2 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      color: #00FFEE;
+    }
+
+    .song-block p {
+      font-size: 1.1rem;
+      margin: 0.3rem 0;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 0.8rem;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      color: #00FFEE;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .error {
+      text-align: center;
+      color: #FF3F34;
+      margin-top: 1rem;
+    }
+
+    footer {
+      padding: 1rem;
+      text-align: center;
+      background: #1B1F23;
+      color: #888;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+
+    @media (max-width: 600px) {
+      #controls {
+        flex-direction: column;
+      }
+
+      button,
+      #songInput,
+      #artistInput,
+      #kValue,
+      #filtering {
+        width: 100%;
+        flex: unset;
+      }
+
+      #output {
+        padding: 0 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>Hybrid Recommendation System</header>
+  <main>
+    <div id="controls">
+      <input id="songInput" type="text" placeholder="Type a song name" autocomplete="off" spellcheck="false" />
+      <input id="artistInput" type="text" placeholder="Type artist name (optional)" autocomplete="off" spellcheck="false" />
+      <select id="kValue" title="Number of recommendations">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+      </select>
+      <select id="filtering" title="Filtering method">
+        <option value="content">Content-Based Filtering</option>
+        <option value="collab">Collaborative Filtering</option>
+        <option value="hybrid" selected >Hybrid Recommender System</option>
+      </select>
+      <button onclick="getRecs()">Recommend</button>
+    </div>
+
+    <div id="output"></div>
+  </main>
+  <footer>© 2025 Recommendation System</footer>
+
+  <script>
+    function setupSingleAudioPlay() {
+      const audios = document.querySelectorAll('audio');
+      audios.forEach(audio => {
+        audio.addEventListener('play', () => {
+          audios.forEach(other => {
+            if (other !== audio) {
+              other.pause();
+              other.currentTime = 0;
+            }
+          });
+        });
+      });
+    }
+
+    async function getRecs() {
+      const name = document.getElementById('songInput').value.trim();
+      const artist = document.getElementById('artistInput').value.trim();
+      const k = parseInt(document.getElementById('kValue').value);
+      const filtering = document.getElementById('filtering').value;
+      const out = document.getElementById('output');
+      out.innerHTML = '';
+
+      if (!name) {
+        out.innerHTML = '<p class="error">Please enter a song name.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/recommend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ song_name: name, artist_name: artist, k, filtering })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          out.innerHTML = `<p class="error">${err.error}</p>`;
+          return;
+        }
+
+        const arr = await res.json();
+
+        if (!arr.length) {
+          out.innerHTML = '<p class="error">No recommendations found</p>';
+          return;
+        }
+
+        const current = arr[0];
+        const recommendations = arr.slice(1);
+
+        const nowPlaying = document.createElement('div');
+        nowPlaying.className = 'song-block';
+        nowPlaying.innerHTML = `
+          <h2>Now Playing</h2>
+          <p><strong>${current.name}</strong> — ${current.artist}</p>
+          ${
+            current.spotify_preview_url
+              ? `<audio controls src="${current.spotify_preview_url}"></audio>`
+              : `<p><em>No preview available</em></p>`
+          }
+        `;
+        out.appendChild(nowPlaying);
+
+        if (!document.querySelector('.section-title')) {
+        const title = document.createElement('p');
+        title.className = 'section-title';
+        title.textContent = 'You May Also Like';
+        out.appendChild(title);
+      }
+
+
+        recommendations.forEach((s, i) => {
+          const div = document.createElement('div');
+          div.className = 'song-block';
+          div.innerHTML = `
+            <p><strong>${i + 1}. ${s.name}</strong> — ${s.artist}</p>
+            ${
+              s.spotify_preview_url
+                ? `<audio controls src="${s.spotify_preview_url}"></audio>`
+                : `<p><em>No preview available</em></p>`
+            }
+          `;
+          out.appendChild(div);
+        });
+
+        setupSingleAudioPlay();
+        window.scrollTo({ top: 200, behavior: 'smooth' });
+      } catch (err) {
+        out.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
