@@ -65,7 +65,11 @@ def home():
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
-    data = request.get_json()
+    # data = request.get_json()
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({'error': 'Invalid or empty JSON body'}), 400
+
     song_name = data.get('song_name', '').strip()
     artist_name = data.get('artist_name', '').strip()
     k = data.get('k', 10)
