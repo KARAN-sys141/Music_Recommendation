@@ -1,8 +1,10 @@
 venv/
+env/
 __pycache__/
 *.pyc
 .env
+.venv
 .DS_Store
 *.pkl
 transform_filtered_data.py
-data/User Listening History.csv
+# data/User Listening History.csv
