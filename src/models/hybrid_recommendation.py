@@ -94,7 +94,7 @@ class HybridRecommendatonSystem:
             .sort_values(by='score', ascending=False)
             .reset_index(drop=True)
         )
-        return recommendations[['name', 'artist', 'spotify_preview_url']]
+        return recommendations[['track_id', 'name', 'artist', 'spotify_preview_url']]
 
 if __name__ == '__main__':
     transformed_data = load_npz('data/transformed_hybrid_data.npz')

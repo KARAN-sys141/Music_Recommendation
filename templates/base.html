@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Music Recommender{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <a href="{{ url_for('main.home') }}" class="logo">
+                <i class="fa-solid fa-music"></i>
+                <span>MuseRec</span>
+            </a>
+            <div class="nav-links" style="flex: 1; display: flex; flex-direction: column;">
+                <a href="{{ url_for('main.home') }}" class="nav-item {% block nav_home %}{% endblock %}"><i
+                        class="fa-solid fa-house"></i> Home</a>
+                <a href="{{ url_for('main.playlists') }}" class="nav-item"><i class="fa-solid fa-layer-group"></i>
+                    Playlists</a>
+
+                <div class="search-container" style="margin-top: 24px; position: relative;">
+                    <i class="fa-solid fa-search"
+                        style="position: absolute; left: 12px; top: 10px; color: var(--text-muted);"></i>
+                    <input type="text" id="globalSearch" placeholder="Search..." autocomplete="off"
+                        style="width: 100%; padding: 10px 10px 10px 36px; border-radius: 20px; border: none; background: rgba(255,255,255,0.1); color: var(--text-main); font-family: inherit; font-size: 0.9rem;">
+                    <div id="searchResults"
+                        style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 8px; max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: 0 8px 24px rgba(0,0,0,0.6);">
+                    </div>
+                </div>
+
+                <div style="margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.05);"
+                    id="authContainer">
+                    <a href="/auth" class="nav-item"><i class="fa-solid fa-user"></i> Log In</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Bottom Player -->
+    <div class="player-bar">
+        <div class="player-left">
+            <img id="playerArt" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'></svg>" alt=""
+                class="player-art" style="opacity: 0;">
+            <div class="player-info">
+                <div id="playerTitle" class="player-title">No track selected</div>
+                <div id="playerArtist" class="player-artist"></div>
+            </div>
+        </div>
+
+        <div class="player-center">
+            <div class="player-controls-main">
+                <button class="ctrl-btn"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="mainPlayBtn" class="play-pause-btn" onclick="togglePlay()"><i
+                        class="fa-solid fa-play"></i></button>
+                <button class="ctrl-btn"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
+            <div class="progress-container">
+                <span id="currentTime" class="time time-left">0:00</span>
+                <div class="progress-bar-bg" id="progressBarBg" onclick="seek(event)">
+                    <div id="progressBarFill" class="progress-bar-fill"></div>
+                </div>
+                <span id="duration" class="time">0:00</span>
+            </div>
+        </div>
+
+        <div class="player-right">
+            <i class="fa-solid fa-volume-high"></i>
+            <div class="volume-bar-bg" id="volBarBg" onclick="setVolume(event)">
+                <div id="volBarFill" class="volume-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Element (hidden) -->
+    <audio id="audioPlayer"></audio>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

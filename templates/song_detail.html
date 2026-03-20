@@ -1,0 +1,451 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ song.name }} - {{ song.artist }} | Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .song-header {
+        display: flex;
+        gap: 40px;
+        padding: 40px;
+        align-items: flex-end;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+    }
+
+    .main-art {
+        width: 232px;
+        height: 232px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .song-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .song-type {
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+
+    .song-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -2px;
+        margin-bottom: 4px;
+        line-height: 1;
+    }
+
+    .song-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        color: var(--text-muted);
+        font-weight: 500;
+        flex-wrap: wrap;
+    }
+
+    .song-meta .dot {
+        font-size: 0.5rem;
+    }
+
+    .analysis-section {
+        padding: 40px;
+    }
+
+    .feature-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 16px;
+    }
+
+    .feature-label {
+        width: 120px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .feature-track {
+        flex: 1;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .feature-fill {
+        height: 100%;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #7c4dff, #b388ff);
+        transition: width 1.2s ease-out;
+        width: 0%;
+    }
+
+    .genre-tag {
+        background: rgba(179, 136, 255, 0.2);
+        color: var(--accent);
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    .add-btn {
+        margin-top: 16px;
+        background: white;
+        color: #000;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+    .add-btn:hover {
+        transform: scale(1.04);
+        background: #e0e0e0;
+    }
+
+    .tabs-container {
+        padding: 0 40px 40px 40px;
+    }
+
+    .tabs-header {
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 24px;
+    }
+
+    .tab-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1rem;
+        font-weight: 600;
+        padding: 12px 20px;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.3s;
+        font-family: inherit;
+    }
+
+    .tab-btn:hover {
+        color: var(--text-main);
+    }
+
+    .tab-btn.active {
+        color: var(--accent);
+    }
+
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--accent);
+    }
+
+    .loading-recs {
+        display: none;
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+    }
+
+    .card:hover .card-play-btn {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+
+    #mainArtWrapper:hover #songArtPlayBtn {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="song-header">
+<div style="position: relative; flex-shrink: 0;" id="mainArtWrapper">
+    <img id="mainSongArt" src="" alt="{{ song.name }}" class="main-art" style="opacity:0;">
+    <div id="songArtPlayBtn" style="position:absolute;bottom:12px;right:12px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:1.4rem;opacity:0;transform:translateY(15px);transition:all 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.5);cursor:pointer;">
+        <i class="fa-solid fa-play"></i>
+    </div>
+</div>
+    <div class="song-info">
+        <div class="song-type">Song Analysis</div>
+        <h1 class="song-title">{{ song.name }}</h1>
+        <div class="song-meta">
+            <a href="{{ url_for('main.artist_detail', artist_name=song.artist) }}"
+                style="color: var(--text-main); text-decoration: none; font-weight: 700;">{{ song.artist }}</a>
+            <span class="dot">&bull;</span>
+            <span>{{ song.year }}</span>
+            <span class="dot">&bull;</span>
+            <span>{{ (song.duration_ms / 60000)|round(2) }} mins</span>
+            {% if song.tags %}
+            <span class="dot">&bull;</span>
+            <span class="genre-tag">{{ song.tags.split(',')[0]|title }}</span>
+            {% endif %}
+        </div>
+        <button class="add-btn" id="addToPlaylistBtn" data-song-id="{{ song.track_id }}"
+            data-song-name="{{ song.name }}" data-song-artist="{{ song.artist }}"
+            data-preview-url="{{ song.spotify_preview_url or '' }}">
+            <i class="fa-solid fa-plus"></i> Add to Playlist
+        </button>
+    </div>
+</div>
+
+<div class="analysis-section" style="display: flex; gap: 40px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 280px;">
+        <h2 class="section-header" style="padding: 0; margin-top: 0; margin-bottom: 16px;">Audio Features</h2>
+        <div id="radarChart" style="width: 100%; height: 340px;"></div>
+    </div>
+    <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column; justify-content: center;">
+        <h2 class="section-header" style="padding: 0; margin-top: 0; margin-bottom: 16px;">Detailed Breakdown</h2>
+        <div class="feature-bar-container">
+            <div class="feature-label">Danceability</div>
+            <div class="feature-track">
+                <div class="feature-fill" data-width="{{ features.danceability }}%"></div>
+            </div>
+        </div>
+        <div class="feature-bar-container">
+            <div class="feature-label">Energy</div>
+            <div class="feature-track">
+                <div class="feature-fill" data-width="{{ features.energy }}%"></div>
+            </div>
+        </div>
+        <div class="feature-bar-container">
+            <div class="feature-label">Valence</div>
+            <div class="feature-track">
+                <div class="feature-fill" data-width="{{ features.valence }}%"></div>
+            </div>
+        </div>
+        <div class="feature-bar-container">
+            <div class="feature-label">Acousticness</div>
+            <div class="feature-track">
+                <div class="feature-fill" data-width="{{ features.acousticness }}%"></div>
+            </div>
+        </div>
+        <div class="feature-bar-container">
+            <div class="feature-label">Liveness</div>
+            <div class="feature-track">
+                <div class="feature-fill" data-width="{{ features.liveness }}%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tabs-container">
+    <div class="tabs-header">
+        <button class="tab-btn active" onclick="loadRecommendations('content', this)">Content-Based</button>
+        <button class="tab-btn" onclick="loadRecommendations('collab', this)">Collaborative</button>
+        <button class="tab-btn" onclick="loadRecommendations('hybrid', this)">Hybrid Model</button>
+    </div>
+
+    <div id="recsLoading" class="loading-recs">
+        <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i>
+        <div style="margin-top: 16px;">Generating Recommendations...</div>
+    </div>
+
+    <div class="grid-container" id="recsGrid" style="padding: 0;"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const songName = {{ song.name | tojson }};
+    const artistName = {{ song.artist | tojson }};
+    const songFeatures = {
+        danceability: {{ features.danceability }},
+        energy: {{ features.energy }},
+        valence: {{ features.valence }},
+        acousticness: {{ features.acousticness }},
+        liveness: {{ features.liveness }}
+    };
+
+    // Self-contained art fetcher with delay to avoid iTunes 429
+    async function getArtUrl(name, artist) {
+        try {
+            const q = encodeURIComponent((name + ' ' + artist).trim());
+            const r = await fetch('https://itunes.apple.com/search?term=' + q + '&media=music&limit=1');
+            const d = await r.json();
+            if (d.results && d.results.length > 0) {
+                return d.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    async function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+
+        // 1. Main song art + play button
+        const mainImg = document.getElementById('mainSongArt');
+        const songArtPlayBtn = document.getElementById('songArtPlayBtn');
+        if (mainImg) {
+            const url = await getArtUrl(songName, artistName);
+            if (url) { mainImg.src = url; }
+            mainImg.style.opacity = '1';
+        }
+        // Wire main play button
+        if (songArtPlayBtn) {
+            const addBtn = document.getElementById('addToPlaylistBtn');
+            const spotifyUrl = addBtn ? addBtn.dataset.previewUrl : '';
+            songArtPlayBtn.addEventListener('click', async () => {
+                let pUrl = spotifyUrl;
+                if (!pUrl) {
+                    try {
+                        const q = encodeURIComponent((songName + ' ' + artistName).trim());
+                        const r = await fetch('https://itunes.apple.com/search?term=' + q + '&media=music&limit=1');
+                        const d = await r.json();
+                        if (d.results && d.results[0]) pUrl = d.results[0].previewUrl;
+                    } catch(e) {}
+                }
+                if (pUrl) playTrack(pUrl, songName, artistName, mainImg ? mainImg.src : null, songArtPlayBtn);
+                else showToast('No preview available for this track', 'error');
+            });
+        }
+
+        // 2. Animate feature bars
+        setTimeout(() => {
+            document.querySelectorAll('.feature-fill').forEach(el => {
+                el.style.width = el.getAttribute('data-width');
+            });
+        }, 300);
+
+        // 3. Plotly radar chart
+        if (typeof Plotly !== 'undefined') {
+            Plotly.newPlot('radarChart', [{
+                type: 'scatterpolar',
+                r: [songFeatures.danceability, songFeatures.energy, songFeatures.valence, songFeatures.acousticness, songFeatures.liveness],
+                theta: ['Danceability', 'Energy', 'Valence', 'Acousticness', 'Liveness'],
+                fill: 'toself',
+                fillcolor: 'rgba(179,136,255,0.3)',
+                line: { color: '#b388ff', width: 2 }
+            }], {
+                polar: {
+                    radialaxis: { visible: true, range: [0, 100], color: 'rgba(255,255,255,0.4)', gridcolor: 'rgba(255,255,255,0.15)' },
+                    angularaxis: { color: '#e0e0e0', gridcolor: 'rgba(255,255,255,0.1)', tickfont: { color: '#e0e0e0', size: 12 } },
+                    bgcolor: 'rgba(0,0,0,0)'
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { t: 40, b: 40, l: 50, r: 50 },
+                showlegend: false,
+                font: { color: '#fff' }
+            }, { displayModeBar: false, responsive: true });
+        }
+
+        // 4. Playlist button
+        const plBtn = document.getElementById('addToPlaylistBtn');
+        if (plBtn) {
+            plBtn.addEventListener('click', function() {
+                addToPlaylist(this.dataset.songId, this.dataset.songName, this.dataset.songArtist, this.dataset.previewUrl || '');
+            });
+        }
+
+        // 5. Load content recommendations by default
+        loadRecommendations('content', document.querySelector('.tab-btn.active'));
+    });
+
+    async function loadRecommendations(filtering, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        const grid = document.getElementById('recsGrid');
+        const loading = document.getElementById('recsLoading');
+        grid.innerHTML = '';
+        loading.style.display = 'block';
+
+        try {
+            const res = await fetch('/api/recommend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ song_name: songName, artist_name: artistName, k: 10, filtering: filtering })
+            });
+            const data = await res.json();
+            loading.style.display = 'none';
+
+            if (!res.ok || data.error) {
+                grid.innerHTML = `<div style="color:#ff8a80;padding:20px;background:rgba(255,82,82,0.1);border-radius:8px;grid-column:1/-1">${data.error || 'Recommendations unavailable for this mode.'}</div>`;
+                return;
+            }
+
+            const recs = Array.isArray(data) ? data.slice(1) : [];
+            if (recs.length === 0) {
+                grid.innerHTML = `<div style="color:#a097b5;padding:20px;grid-column:1/-1">No recommendations found for this song in ${filtering} mode.</div>`;
+                return;
+            }
+
+            // Build cards immediately (visible)
+            const cards = recs.map((s, idx) => {
+                const card = document.createElement('a');
+                card.href = '/song/' + (s.track_id || '');
+                card.className = 'card';
+                card.style.textDecoration = 'none';
+                card.innerHTML = `
+                    <div class="card-img-wrapper">
+                        <img src="/static/img/placeholder.png" onerror="this.style.background='#1a0e36'" alt="${s.name || ''}" class="card-img" id="rec-img-${idx}">
+                        <div class="card-play-btn" id="rec-play-${idx}" style="position:absolute;bottom:8px;right:8px;width:48px;height:48px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:1.2rem;opacity:0;transform:translateY(15px);transition:all 0.3s ease;box-shadow:0 6px 16px rgba(0,0,0,0.4);border:none;cursor:pointer;">
+                            <i class="fa-solid fa-play"></i>
+                        </div>
+                    </div>
+                    <div class="card-title">${s.name || 'Unknown'}</div>
+                    <div class="card-subtitle">${s.artist || ''}</div>
+                `;
+                grid.appendChild(card);
+                return { name: s.name, artist: s.artist, previewUrl: s.spotify_preview_url || '', idx };
+            });
+
+            // Fetch images sequentially after cards render; wire play button
+            (async () => {
+                for (const { name, artist, previewUrl, idx } of cards) {
+                    const url = await getArtUrl(name, artist);
+                    const img = document.getElementById('rec-img-' + idx);
+                    const btn = document.getElementById('rec-play-' + idx);
+                    if (img && url) img.src = url;
+                    // Wire play button: prefer iTunes preview, fallback to spotify preview
+                    if (btn) {
+                        btn.addEventListener('click', async (e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            let pUrl = previewUrl;
+                            if (!pUrl) {
+                                // Try fetching from iTunes on click
+                                try {
+                                    const q = encodeURIComponent((name + ' ' + artist).trim());
+                                    const r = await fetch('https://itunes.apple.com/search?term=' + q + '&media=music&limit=1');
+                                    const d = await r.json();
+                                    if (d.results && d.results[0]) pUrl = d.results[0].previewUrl;
+                                } catch(e) {}
+                            }
+                            if (pUrl) playTrack(pUrl, name, artist, img ? img.src : null, btn);
+                            else showToast('No preview available for this track', 'error');
+                        });
+                    }
+                    await delay(220);
+                }
+            })();
+
+        } catch (e) {
+            loading.style.display = 'none';
+            grid.innerHTML = `<div style="color:#ff8a80;padding:20px;grid-column:1/-1">Server error: ${e.message}</div>`;
+        }
+    }
+</script>
+{% endblock %}

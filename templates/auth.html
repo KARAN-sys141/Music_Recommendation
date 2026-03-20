@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Authenticate | MuseRec{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .auth-card {
+        background: var(--bg-card);
+        padding: 40px;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+        border: 1px solid var(--border-color);
+    }
+
+    .auth-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 24px;
+        text-align: center;
+        letter-spacing: -0.5px;
+    }
+
+    .auth-tabs {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .auth-tab {
+        flex: 1;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        padding: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color 0.3s;
+        position: relative;
+    }
+
+    .auth-tab:hover {
+        color: var(--text-main);
+    }
+
+    .auth-tab.active {
+        color: var(--accent);
+    }
+
+    .auth-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--accent);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+
+    .form-input {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(179, 136, 255, 0.2);
+    }
+
+    .auth-btn {
+        width: 100%;
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 14px;
+        font-size: 1rem;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.3s;
+    }
+
+    .auth-btn:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
+    }
+
+    .auth-error {
+        color: #ff5252;
+        font-size: 0.9rem;
+        margin-top: 12px;
+        text-align: center;
+    }
+
+    .auth-success {
+        color: #69f0ae;
+        font-size: 0.9rem;
+        margin-top: 12px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Log In</button>
+            <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Sign Up</button>
+        </div>
+
+        <form id="authForm" onsubmit="handleAuth(event)">
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" id="username" class="form-input" required placeholder="Enter your username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="password" class="form-input" required
+                    placeholder="Enter password (min 6 chars)">
+            </div>
+
+            <button type="submit" class="auth-btn" id="submitBtn">Log In</button>
+            <div id="authMessage"></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentMode = 'login';
+
+    function switchTab(mode) {
+        currentMode = mode;
+        document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+        document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
+        document.getElementById('submitBtn').textContent = mode === 'login' ? 'Log In' : 'Sign Up';
+        document.getElementById('authMessage').className = '';
+        document.getElementById('authMessage').textContent = '';
+    }
+
+    async function handleAuth(e) {
+        e.preventDefault();
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        const msgEl = document.getElementById('authMessage');
+
+        msgEl.textContent = 'Processing...';
+        msgEl.className = 'auth-muted';
+
+        try {
+            const res = await fetch(`/api/auth/${currentMode}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                msgEl.textContent = data.error || 'Authenication failed.';
+                msgEl.className = 'auth-error';
+            } else {
+                msgEl.textContent = currentMode === 'login' ? 'Success! Redirecting...' : 'Account created! Please log in.';
+                msgEl.className = 'auth-success';
+                if (currentMode === 'login') {
+                    setTimeout(() => window.location.href = '/', 1000);
+                } else {
+                    setTimeout(() => switchTab('login'), 1500);
+                }
+            }
+        } catch (err) {
+            msgEl.textContent = 'Network error.';
+            msgEl.className = 'auth-error';
+        }
+    }
+</script>
+{% endblock %}

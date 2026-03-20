@@ -80,7 +80,7 @@ def collaborative_recommendation(song_name, artist_name, track_ids, songs_data, 
         songs_data[songs_data['track_id'].isin(recommended_ids)]
         .merge(scores_df, on='track_id')
         .sort_values(by='score', ascending=False)
-        .drop(columns=['track_id', 'score'])
+        .drop(columns=['score'])
         .reset_index(drop=True)
     )
 

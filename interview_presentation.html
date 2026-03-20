@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>MuseRec - Project Presentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Reveal.js Core CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <!-- Reveal.js Theme (Dracula/Dark) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/dracula.min.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 {
+            text-transform: none;
+            color: #b388ff;
+        }
+        .reveal p, .reveal li {
+            font-size: 0.8em;
+            line-height: 1.4;
+        }
+        .highlight {
+            color: #ff4081;
+            font-weight: bold;
+        }
+        .tech-box {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 10px;
+            font-size: 0.7em;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .code-block {
+            background: #282a36;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.6em;
+            text-align: left;
+            font-family: monospace;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+<div class="reveal">
+    <div class="slides">
+
+        <!-- Slide 1: Title -->
+        <section>
+            <h1><i class="fa-solid fa-music"></i> MuseRec</h1>
+            <h3>Advanced Hybrid Music Recommendation System</h3>
+            <p>End-to-End Project Presentation</p>
+            <p style="font-size: 0.6em; color: #888; mt-4">Use Arrow Keys to Navigate ➡</p>
+        </section>
+
+        <!-- Slide 2: Project Overview -->
+        <section>
+            <h2>Project Overview</h2>
+            <p><strong>Goal:</strong> Build a production-ready Web Application that intelligently recommends music tailored to user preferences, matching modern platforms like Spotify.</p>
+            <div style="margin-top: 30px;">
+                <div class="tech-box"><i class="fa-brands fa-python"></i> Machine Learning (Scikit-Learn, Pandas)</div>
+                <div class="tech-box"><i class="fa-brands fa-python"></i> Backend (Flask, SQLAlchemy, JWT)</div>
+                <div class="tech-box"><i class="fa-brands fa-js"></i> Frontend (Vanilla JS, Plotly.js, GSAP)</div>
+            </div>
+        </section>
+
+        <!-- Slide 3: The Data Pipeline -->
+        <section>
+            <h2>1. The Data Pipeline</h2>
+            <p>Data is the fuel for our engines. The project handles two main datasets:</p>
+            <ul>
+                <li><strong>Song Metadata:</strong> Audio features (danceability, energy, tempo) and genre tags.</li>
+                <li><strong>User Listening History:</strong> Millions of rows mapping users to track play counts.</li>
+            </ul>
+            <p class="highlight">Preprocessing Steps:</p>
+            <ul>
+                <li>Removed duplicates and handled missing values (NaNs).</li>
+                <li>Normalized text formats (lowercase processing).</li>
+                <li>Filtered the master song dataset to match tracks that actually exist in the user history to avoid cold-start issues during collaborative filtering.</li>
+            </ul>
+        </section>
+
+        <!-- Slide 4: Content-Based Filtering -->
+        <section>
+            <h2>2. Content-Based Filtering</h2>
+            <p>Recommends songs that <em>sound mathematically similar</em> to the input track.</p>
+            <div class="code-block" style="text-align: center;">
+                Input Song ➡ Extract Features ➡ Find Nearest Neighbors
+            </div>
+            <ul>
+                <li><strong>Text Features (Genre/Tags):</strong> Processed using <code>TfidfVectorizer</code> to understand textual similarity.</li>
+                <li><strong>Continuous Features (Tempo, Duration):</strong> Normalized using <code>StandardScaler</code>.</li>
+                <li><strong>Bounded Features (Danceability 0-1):</strong> Scaled using <code>MinMaxScaler</code>.</li>
+                <li><strong>Similarity Metric:</strong> <code>Cosine Similarity</code> is computed across this combined high-dimensional vector space.</li>
+            </ul>
+        </section>
+
+        <!-- Slide 5: Collaborative Filtering -->
+        <section>
+            <h2>3. Collaborative Filtering</h2>
+            <p>Recommends songs based on <em>"Users who listened to this also listened to that."</em></p>
+            <ul>
+                <li><strong>Interaction Matrix:</strong> Transformed millions of play-count records into a <code>scipy.sparse.csr_matrix</code>. Rows = Tracks, Columns = Users.</li>
+                <li><strong>Dask for Big Data:</strong> Used <code>dask.dataframe</code> to powerfully process the massive user history file out-of-core (exceeding RAM limits).</li>
+                <li><strong>Similarity:</strong> Calculates Item-Item <code>Cosine Similarity</code> between track vectors.</li>
+            </ul>
+        </section>
+
+        <!-- Slide 6: Hybrid Engine -->
+        <section>
+            <h2>4. The Hybrid Engine</h2>
+            <p>The true power of the platform: Combining both models to offset their individual weaknesses.</p>
+            <div class="code-block">
+                Score = (Weight_CB * Normalized_CB_Score) + (Weight_CF * Normalized_CF_Score)
+            </div>
+            <ul>
+                <li><strong>Weights:</strong> Configured to mathematically favor Collaborative data (e.g., 70% CF, 30% CB) when community data is strong.</li>
+                <li><strong>Normalization:</strong> Both score outputs are Min-Max normalized to scale (0 to 1) before blending to ensure mathematical parity.</li>
+            </ul>
+        </section>
+
+        <!-- Slide 7: Backend Architecture -->
+        <section>
+            <h2>5. Backend (Flask & SQLite)</h2>
+            <p>A robust API serves the frontend and manages state.</p>
+            <ul>
+                <li><strong>Blueprints:</strong> Organized into modular routes (`routes.py`) and Auth (`auth.py`).</li>
+                <li><strong>Authentication:</strong> 
+                    <ul>
+                        <li><code>Flask-Bcrypt</code> for hashing passwords.</li>
+                        <li><code>Flask-JWT-Extended</code> for Secure, HTTPOnly session cookies.</li>
+                    </ul>
+                </li>
+                <li><strong>Database (SQLAlchemy):</strong> Persistent models mapping <code>User</code> to their custom <code>Playlist</code> and <code>Liked Songs</code>.</li>
+                <li><strong>Search API:</strong> A dedicated JSON endpoint queries the pandas dataframe dynamically for global search lookups.</li>
+            </ul>
+        </section>
+
+        <!-- Slide 8: Frontend Engine -->
+        <section>
+            <h2>6. Premium UI & Frontend</h2>
+            <p>A focus on aesthetics and interactive user experience.</p>
+            <ul>
+                <li><strong>Plotly.js Radar Charts:</strong> Visually renders the acoustic fingerprint of a song (Danceability vs Acousticness vs Energy).</li>
+                <li><strong>External APIs:</strong> Asynchronous calls hit the <code>iTunes Search API</code> to fetch high-res album art and 30-second audio previews on the fly.</li>
+                <li><strong>Global Audio Player:</strong> A custom-built bottom player bar manages playback state (Play/Pause/Seek/Volume) globally across the app.</li>
+                <li><strong>CSS Architecture:</strong> Glassmorphism cards, dynamic grid layouts, and staggered transition animations.</li>
+            </ul>
+        </section>
+
+        <!-- Slide 9: Model Evaluation -->
+        <section>
+            <h2>7. Model Evaluation & Verification</h2>
+            <p>Because this is unsupervised ranking, we evaluate differently than standard Accuracy.</p>
+            <ul>
+                <li><span class="highlight">Offline Metrics (Leave-One-Out):</span> Hiding 20% of a user's listening history and checking:
+                    <ul>
+                        <li><strong>Precision@K / Recall@K:</strong> Did the hidden songs appear in our Top K recommendations?</li>
+                        <li><strong>NDCG:</strong> Were the most relevant songs ranked at the very top?</li>
+                    </ul>
+                </li>
+                <li><span class="highlight">Experience Metrics:</span> Measuring <strong>Diversity</strong> (avoiding just one artist) and <strong>Novelty</strong> (surfacing hidden gems).</li>
+                <li><span class="highlight">Online Metrics (A/B Testing):</span> In production, we measure business KPIs like: <strong>Click-Through Rate (CTR)</strong> on the Play Preview button and <strong>Add-to-Playlist</strong> conversion rate.</li>
+            </ul>
+        </section>
+
+        <!-- Slide 10: Challenges Overcome -->
+        <section>
+            <h2>8. Challenges Overcome</h2>
+            <ul>
+                <li><span class="highlight">API Rate Limiting:</span> Fetching 10 recommendation images concurrently caused iTunes API (HTTP 429) failures. <strong>Fix:</strong> Implemented a synchronous <code>delay()</code> queue to stagger requests by 200ms.</li>
+                <li><span class="highlight">Audio State Syncing:</span> Clicking a play button on a card didn't update the global player bar. <strong>Fix:</strong> Built a global state tracker referencing the active DOM element to instantly toggle ⏸ and ▶ everywhere.</li>
+                <li><span class="highlight">Data Science Code Quality:</span> Refactored raw flat scripts into an industry-standard <code>Cookiecutter</code> data-science directory structure (src/models, notebooks/, data/processed) separating concerns perfectly.</li>
+            </ul>
+        </section>
+
+        <!-- Slide 10: Conclusion -->
+        <section>
+            <h2>8. Conclusion & Future Scope</h2>
+            <p>MuseRec successfully demonstrates the intersection of full-stack engineering and machine learning.</p>
+            <p><strong>Next Steps:</strong></p>
+            
+            <br><br>
+            <h3><i class="fa-solid fa-microphone"></i> Thank you! Any Questions?</h3>
+        </section>
+
+    </div>
+</div>
+
+<!-- Reveal.js Core Script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+<script>
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        center: true,
+        hash: true,
+        transition: 'slide' // none/fade/slide/convex/concave/zoom
+    });
+</script>
+
+</body>
+</html>

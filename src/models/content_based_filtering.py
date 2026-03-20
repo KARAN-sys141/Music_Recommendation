@@ -7,7 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics.pairwise import cosine_similarity
-from data_cleaning import data_for_content_filtering
+from src.data.data_cleaning import data_for_content_filtering
 from scipy.sparse import save_npz
 
 CLEANED_DATA_PATH = 'data/cleaned_data.csv'
@@ -63,7 +63,7 @@ def recommend(song_name, songs_data, transformed_data, k=10):
 
     recommended_songs = songs_data.iloc[top_k_songs_indexes]
     final_df = pd.concat([song_row, recommended_songs], ignore_index=True)
-    return final_df[['name', 'artist', 'spotify_preview_url']]
+    return final_df[['track_id', 'name', 'artist', 'spotify_preview_url']]
 
 def test_recommendation(data_path, song_name, k=10):
     song_name = song_name.lower()

@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block title %}My Playlists | MuseRec{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-section {
+        padding: 40px;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.3));
+        display: flex;
+        align-items: flex-end;
+        gap: 32px;
+    }
+
+    .header-icon {
+        width: 232px;
+        height: 232px;
+        background: linear-gradient(135deg, var(--accent), #4527a0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .playlist-info h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .playlist-info h1 {
+        margin: 8px 0;
+        font-size: 4rem;
+        font-weight: 800;
+        letter-spacing: -2px;
+        line-height: 1;
+    }
+
+    .playlist-info p {
+        margin: 0;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .songs-list {
+        padding: 0 40px 40px 40px;
+    }
+
+    .song-row {
+        display: grid;
+        grid-template-columns: 50px 1fr 200px 50px;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 8px;
+        transition: background 0.2s;
+        color: var(--text-muted);
+    }
+
+    .song-row:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+    }
+
+    .song-row-header {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 16px;
+    }
+
+    .song-row-header:hover {
+        background: transparent;
+        color: var(--text-muted);
+    }
+
+    .song-title-col {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .song-img {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        object-fit: cover;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .song-name {
+        color: var(--text-main);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .song-name:hover {
+        text-decoration: underline;
+    }
+
+    .song-artist {
+        font-size: 0.85rem;
+    }
+
+    .play-btn {
+        background: none;
+        border: none;
+        color: var(--text-main);
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+        padding: 8px;
+    }
+
+    .song-row:hover .play-btn {
+        opacity: 1;
+    }
+
+    .play-btn:hover {
+        color: var(--accent);
+        transform: scale(1.1);
+    }
+
+    .index-col {
+        text-align: right;
+        padding-right: 16px;
+    }
+
+    .song-row:hover .index-text {
+        display: none;
+    }
+
+    .song-row:hover .play-btn {
+        display: block;
+        opacity: 1;
+    }
+
+    .play-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        padding-right: 16px;
+        width: 30px;
+    }
+
+    .play-btn {
+        display: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <div class="header-icon">
+        <i class="fa-solid fa-heart fa-5x" style="color: white;"></i>
+    </div>
+    <div class="playlist-info">
+        <h4>Playlist</h4>
+        <h1>Liked Songs</h1>
+        <p>{{ songs|length }} songs</p>
+    </div>
+</div>
+
+<div class="songs-list">
+    <div class="song-row song-row-header">
+        <div class="index-col">#</div>
+        <div>Title</div>
+        <div>Added</div>
+        <div></div>
+    </div>
+
+    {% if not songs %}
+    <div class="empty-state">
+        <i class="fa-solid fa-music fa-3x" style="opacity: 0.5; margin-bottom: 16px;"></i>
+        <h2>Songs you like will appear here</h2>
+        <p>Save songs by clicking the favorite icon on the song details page.</p>
+    </div>
+    {% else %}
+    {% for s in songs %}
+    <div class="song-row">
+        <div class="play-wrapper">
+            <span class="index-text">{{ loop.index }}</span>
+            <button class="play-btn"
+                onclick="playTrack('{{ s.preview_url }}', '{{ s.song_name|replace('\'', '\\\'') }}', '{{ s.artist_name|replace('\'', '\\\'') }}', null)">
+                <i class="fa-solid fa-play"></i>
+            </button>
+        </div>
+
+        <div class="song-title-col">
+            <img src="" id="pl-img-{{ s.song_id }}" class="song-img">
+            <div>
+                <a href="/song/{{ s.song_id }}" class="song-name">{{ s.song_name }}</a>
+                <div class="song-artist">{{ s.artist_name }}</div>
+            </div>
+        </div>
+        <div>{{ s.added_at.strftime('%b %d, %Y') }}</div>
+        <div style="text-align: right;"><i class="fa-solid fa-heart" style="color: var(--accent);"></i></div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        {% for s in songs %}
+        ImageQueue.add(async () => {
+            const url = await fetchAlbumArt("{{ s.song_name|replace('\"', '\\\"') }}", "{{ s.artist_name|replace('\"', '\\\"') }}");
+            const img = document.getElementById("pl-img-{{ s.song_id }}");
+            if (img) img.src = url;
+        });
+        {% endfor %}
+    });
+</script>
+{% endblock %}

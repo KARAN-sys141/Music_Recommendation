@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>MuseRec: The Complete Interview Walkthrough</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/night.min.css" id="theme">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 { color: #b388ff; text-transform: none; font-weight: 600; }
+        .reveal p, .reveal li { font-size: 0.7em; line-height: 1.5; text-align: left; }
+        .highlight { color: #ffeb3b; font-weight: bold; }
+        .math-box { background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; border-left: 5px solid #ff4081; margin-top: 20px; font-size: 0.6em; font-family: monospace; }
+        .script-text { font-style: italic; color: #a5d6a7; border-left: 3px solid #4CAF50; padding-left: 15px; margin-top: 15px; }
+        .reveal .slides section { padding: 20px; }
+        .step-label { display: inline-block; background: #e91e63; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.5em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="reveal">
+    <div class="slides">
+
+        <!-- PART 1: INTRODUCTION -->
+        <section>
+            <h1>MuseRec</h1>
+            <h3>An End-to-End Hybrid Music Recommendation System</h3>
+            <p style="text-align:center;"><strong>The 'Why' & The 'How' - In-Depth Walkthrough</strong></p>
+            <p style="text-align:center; font-size: 0.5em; color: gray;">Press Right Arrow to navigate horizontally (Chapters). Press Down Arrow to dive deep (Math/Why).</p>
+        </section>
+
+        <!-- Chapter 1: The Problem -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 1</div>
+                <h2>The Problem Statement</h2>
+                <div class="script-text">"Good morning. Before I explain my code, let me explain WHY I built this. In the era of infinite content, discovery is broken. We have 100 million songs on Spotify. Without a smart filter, users get overwhelmed and leave."</div>
+                <p><strong>The Objective:</strong> Build a system that understands both the <em>music's DNA</em> (how it sounds) and the <em>crowd's psychology</em> (what humans actually like together) to serve highly accurate recommendations.</p>
+            </section>
+            <section>
+                <h3>Why not just build a Jupyter Notebook?</h3>
+                <div class="script-text">"Most beginner data science projects end inside a Jupyter Notebook. They print 5 song names to a terminal. But real users don't use terminals."</div>
+                <p><strong>The Decision:</strong> I decided to go <strong>End-to-End</strong>. I wanted to build the Machine Learning model, then persist it to disk, build a Python web server (Flask) around it, create a secure database, and build a beautiful frontend so a non-technical person can actually hear the recommendations.</p>
+            </section>
+        </section>
+
+        <!-- Chapter 2: The Data -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 2</div>
+                <h2>The Data (Our Fuel)</h2>
+                <div class="script-text">"An ML model is only as good as its data. I sourced two massive datasets."</div>
+                <ol>
+                    <li><strong>Music Info (Metadata):</strong> Contains the audio DNA (tempo, energy, acousticness) and tags of thousands of tracks.</li>
+                    <li><strong>User Listening History:</strong> Millions of rows showing 'User XYZ listened to Track ABC 15 times'.</li>
+                </ol>
+            </section>
+            <section>
+                <h3>Why TWO types of data?</h3>
+                <p><strong>Why not just use Audio Features?</strong> Because human taste is weird. You might like a heavy metal song and a soft acoustic song not because they sound similar, but because they have the same melancholic 'vibe'. Audio features can't capture human abstract emotion.</p>
+                <p><strong>Why not just use User History?</strong> This causes the "Cold Start Problem". If a new artist uploads a song today, nobody has listened to it yet. So user-history models (Collaborative Filtering) will NEVER recommend it.</p>
+                <p class="highlight">Conclusion: We need BOTH. This is why we build a HYBRID model.</p>
+            </section>
+        </section>
+
+        <!-- Chapter 3: Preprocessing -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 3</div>
+                <h2>Data Preprocessing</h2>
+                <div class="script-text">"Real world data is messy. Before feeding it to any algorithm, I had to clean it."</div>
+                <ul>
+                    <li><strong>Deduplication:</strong> Dropped duplicate Spotify IDs. If the same song appears twice, it ruins the math.</li>
+                    <li><strong>Lowercasing:</strong> Converted all text to lowercase. Why? Because to a computer, "Rock" and "rock" are two completely different things.</li>
+                    <li><strong>Cross-Filtering:</strong> I only kept songs in the 'Music Info' dataset that also existed in the 'Listening History' dataset. Why? To align our two models perfectly.</li>
+                </ul>
+            </section>
+        </section>
+
+        <!-- Chapter 4: Content-Based Filtering -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 4</div>
+                <h2>Model 1: Content-Based Filtering</h2>
+                <div class="script-text">"My first engine looks at the song itself. If you like a high-energy, fast-tempo pop song, I will find other high-energy, fast-tempo pop songs."</div>
+                <p><strong>How:</strong> We take the audio features (Danceability, Energy, Liveness) and map them mathematically.</p>
+            </section>
+            <section>
+                <h3>The Math: TF-IDF & NLP</h3>
+                <div class="script-text">"Songs also have text genres ('rock, indie, alternative'). Computers can't do math on words. So I used Natural Language Processing (NLP)."</div>
+                <p><strong>What is TF-IDF?</strong> (Term Frequency-Inverse Document Frequency)</p>
+                <div class="math-box">
+                    It counts how many times a word appears in a song's tags (TF). But it penalizes words that appear in EVERY song across the dataset (IDF). <br><br>
+                    Why? If every song is tagged "music", that word is useless for finding similarity. If only 5 songs are tagged "synth-wave", that word is highly valuable. TF-IDF turns words into smart numbers.
+                </div>
+            </section>
+            <section>
+                <h3>The Math: Scaling (MinMax & Standard)</h3>
+                <div class="script-text">"I also faced a huge math problem. 'Tempo' can be 180 BPM. But 'Danceability' is a score between 0.0 and 1.0."</div>
+                <div class="math-box">
+                    If I compared two songs using raw numbers, the algorithm would only care about Tempo, because 180 is massively bigger than 0.8.<br><br>
+                    <strong>The Fix (Scaling):</strong> I used Scikit-Learn's `StandardScaler` to shrink/grow all numbers to live on the exact same scale. Now Tempo and Danceability have equal voting power.
+                </div>
+            </section>
+            <section>
+                <h3>The Core Math: Cosine Similarity</h3>
+                <div class="script-text">"So now every song is just an array of numbers (a vector). How do I find similar songs? I calculate the angle between them."</div>
+                <div class="math-box">
+                    <strong>Cosine Similarity</strong> measures the angle between two lines drawn from origin (0,0) to the song's coordinates.<br><br>
+                    - If angle is 0 degrees (Cosine = 1): They are perfectly identical.<br>
+                    - If angle is 90 degrees (Cosine = 0): They have nothing in common.<br><br>
+                    Why use Cosine instead of regular distance (Euclidean)? Because Cosine ignores the *magnitude* (length) of the vector and only cares about the *direction* (context/pattern).
+                </div>
+            </section>
+        </section>
+
+        <!-- Chapter 5: Collaborative Filtering -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 5</div>
+                <h2>Model 2: Collaborative Filtering</h2>
+                <div class="script-text">"My second engine ignores the audio completely. It only observes human behavior."</div>
+                <p><strong>The concept:</strong> If User A and B both heavily listen to 10 specific songs, they have similar taste. If User A discovers an 11th song, User B will probably like it too.</p>
+            </section>
+            <section>
+                <h3>The Problem: Big Data (RAM Crashes)</h3>
+                <div class="script-text">"When I tried to load millions of user histories into Pandas, my computer's RAM crashed. Pandas loads everything into memory at once."</div>
+                <p><strong>The Solution: Dask</strong></p>
+                <div class="math-box">
+                    I switched to `Dask`. WHY? Dask is essentially parallel Pandas. It chunks the massive CSV file into smaller pieces, processes one piece at a time, and combines the results. This allows me to process datasets larger than my actual RAM!
+                </div>
+            </section>
+            <section>
+                <h3>The Math: Sparse Matrices</h3>
+                <div class="script-text">"I needed to build an Interaction Matrix. Rows = Songs, Columns = Users, Values = Playcounts. But this creates a massive grid with billions of cells."</div>
+                <div class="math-box">
+                    <strong>Why Sparse?</strong> 99% of users haven't listened to 99% of songs. So 99% of this massive grid is the number 0.<br><br>
+                    Storing billions of zeros wastes gigabytes of memory. I used `scipy.sparse.csr_matrix` (Compressed Sparse Row). It ONLY stores the non-zero numbers and their coordinates. This shrunk my memory footprint from Gigabytes to Megabytes instantly!
+                </div>
+            </section>
+        </section>
+
+        <!-- Chapter 6: The Hybrid Model -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 6</div>
+                <h2>The Hybrid Engine (The Masterpiece)</h2>
+                <div class="script-text">"Content-Based is great for brand new songs. Collaborative is great for finding weird, unexpected human connections. I wanted the best of both worlds."</div>
+                <p>I built a custom Python class to combine them.</p>
+            </section>
+            <section>
+                <h3>The Math: Normalization & Blending</h3>
+                <div class="script-text">"The biggest challenge was that the scores from Model 1 and Model 2 weren't on the same scale. I couldn't just add them together."</div>
+                <div class="math-box">
+                    <strong>Step 1: Min-Max Normalization.</strong> I took the output scores from both models and mathematically squeezed them so the lowest score became exactly 0.0, and the highest exactly 1.0.<br><br>
+                    <strong>Step 2: Weighted Average.</strong><br>
+                    Final Score = (Model_1_Score * 0.3) + (Model_2_Score * 0.7)<br><br>
+                    Why 70% to Collaborative? Because historically, human crowd-wisdom is a much stronger predictor of taste than raw audio math.
+                </div>
+            </section>
+        </section>
+
+        <!-- Chapter 7: Software Engineering -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 7</div>
+                <h2>From Notebook to Software</h2>
+                <div class="script-text">"Once the ML math was done, I had to productionalize it. This transitions the project from Data Science into Software Engineering."</div>
+                <ul>
+                    <li><strong>Serialization:</strong> I used `joblib` and `save_npz` to save my trained mathematical matrices and scalers to disk. So we don't recalculate them every time someone opens the app.</li>
+                    <li><strong>Flask Backend:</strong> I built a lightweight Python server. When a user requests a song, Flask loads the matrices into RAM and performs the vector math in milliseconds.</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Database & Authentication</h3>
+                <div class="script-text">"A real app needs strict security and a database to remember users."</div>
+                <ul>
+                    <li><strong>Database (SQLite/SQLAlchemy):</strong> I mapped out a relational database with `User`, `Playlist`, and `PlaylistSong` models.</li>
+                    <li><strong>Passwords (Bcrypt):</strong> Never store plain-text passwords! I used Bcrypt to hash them into irreversible strings.</li>
+                    <li><strong>Security (JWT):</strong> Once a user logs in, I issue a JSON Web Token (JWT) as an `HttpOnly Cookie`. Why HttpOnly? To prevent cross-site scripting (XSS) attacks from stealing the session.</li>
+                </ul>
+            </section>
+        </section>
+
+        <!-- Chapter 8: The Frontend UX -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 8</div>
+                <h2>Frontend & User Experience</h2>
+                <div class="script-text">"If the UI is ugly, nobody will care how good your Machine Learning is."</div>
+                <p>Instead of Bootstrap templates, I wrote raw <strong>Vanilla CSS3 and Vanilla JS</strong> to build a modern, glassmorphic, Spotify-inspired interface.</p>
+            </section>
+            <section>
+                <h3>Explainable AI (Plotly.js)</h3>
+                <div class="script-text">"When we recommend a song, the user might ask 'Why this song?'. I wanted to make the AI explainable."</div>
+                <p><strong>Solution:</strong> I embedded interactive Plotly.js **Radar Charts**. It visually maps the DNA of the song (showing a shape representing its energy vs acousticness). The user visually sees *why* it matches.</p>
+            </section>
+            <section>
+                <h3>Real Audio Playback (iTunes API)</h3>
+                <div class="script-text">"A music app without music is just a spreadsheet. I wanted users to HEAR the recommendation."</div>
+                <p><strong>Solution:</strong> On the fly, my JavaScript hits the public <strong>iTunes Search API</strong> asynchronously, passing the song and artist name. It fetches high-res custom album art, and grabs a 30-second audio `<audio>` preview URL, wiring it directly to a custom bottom player bar.</p>
+            </section>
+        </section>
+
+        <!-- Chapter 9: Evaluation -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 9</div>
+                <h2>Model Verification (How do we know it works?)</h2>
+                <div class="script-text">"In traditional ML, we look at 'Accuracy'. But in unsupervised recommendation ranking, Accuracy doesn't exist. So how do I verify it?"</div>
+                <ol>
+                    <li>Offline Testing (Historical)</li>
+                    <li>Experience Metrics</li>
+                    <li>Online Testing (Production)</li>
+                </ol>
+            </section>
+            <section>
+                <h3>1. Offline Evaluation (Leave-One-Out)</h3>
+                <div class="script-text">"To test the math without real users, we hide data."</div>
+                <div class="math-box">
+                    I hide the last 20% of a user's listening history. I feed the first 80% to my model. <br><br>
+                    <strong>Recall@K:</strong> Out of the hidden 20%, how many did my model successfully predict in the Top 10?<br><br>
+                    <strong>NDCG:</strong> Did my model rank the most relevant songs at #1, or did it bury them at #10? (NDCG rewards higher ranking positions mathematically).
+                </div>
+            </section>
+            <section>
+                <h3>2. Online Testing & Business Metrics</h3>
+                <div class="script-text">"Once the model is live on the web, the true test begins. We use A/B Testing."</div>
+                <p>I would route 50% of users to the Content model, and 50% to the Hybrid model. Then I track business KPIs:</p>
+                <ul>
+                    <li><strong>Click-Through Rate (CTR):</strong> How many people actually clicked the "Play" preview button?</li>
+                    <li><strong>Conversion Rate:</strong> How many people clicked "Add to Playlist" (meaning the recommendation was highly successful).</li>
+                    <li><strong>Diversity Check:</strong> Ensure the model isn't just recommending 10 songs by the exact same artist (Filter Bubble).</li>
+                </ul>
+            </section>
+        </section>
+
+        <!-- Chapter 10: Conclusion -->
+        <section>
+            <section>
+                <div class="step-label">Chapter 10</div>
+                <h2>Conclusion</h2>
+                <div class="script-text">"To wrap up: This project represents a complete, real-world development cycle."</div>
+                <p>I started with raw messy CSV data, scaled and vectorized it with Machine Learning, handled memory limits with Big Data tools (Dask), engineered a Hybrid algorithm, deployed it to a Python web backend with a secure database, and built an interactive frontend that fetches live media APIs.</p>
+            </section>
+            <section>
+                <h3>Future Architecture Scope</h3>
+                <div class="script-text">"If I had an engineering team and a budget, here is what I would do next to scale this system."</div>
+                <ul>
+                    <li><strong>Docker & K8s:</strong> Containerize the Flask app to deploy seamlessly to AWS/GCP.</li>
+                    <li><strong>PostgreSQL:</strong> Migrate away from SQLite to handle concurrent transactions when thousands of users are adding playlists simultaneously.</li>
+                    <li><strong>Deep Learning:</strong> Replace Matrix factorization with Neural Collaborative Filtering (Deep Neural Networks) to capture non-linear user behaviors.</li>
+                </ul>
+            </section>
+            <section>
+                <h1>Thank You!</h1>
+                <h3>Any Questions?</h3>
+                <p style="font-style: italic; color: gray;">(Feel free to ask about the math, the UI, or the architecture)</p>
+            </section>
+        </section>
+
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+<script>
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        center: true,
+        hash: true,
+        transition: 'slide'
+    });
+</script>
+
+</body>
+</html>
