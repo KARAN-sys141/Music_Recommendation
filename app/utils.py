@@ -72,15 +72,10 @@ def get_recommendations(song_name, artist_name, k, filtering):
     song_name_lower = song_name.lower().strip()
     artist_name_lower = artist_name.lower().strip() if artist_name else ''
     
-    songs_data = load_data()
-    filtered_data = load_filtered_data()
-    transformed_data = load_transformed_data()
-    collab_matrix = load_collab_matrix()
-    track_ids = load_track_ids()
-    interaction_matrix = load_interaction_matrix()
-    transformed_hybrid_data = load_transformed_hybrid_data()
-
     if filtering == 'content':
+        songs_data = load_data()
+        transformed_data = load_transformed_data()
+
         if artist_name_lower:
             match = songs_data[
                 (songs_data['name'].str.lower() == song_name_lower) &
@@ -106,6 +101,8 @@ def get_recommendations(song_name, artist_name, k, filtering):
         return recommendations.fillna('').to_dict(orient='records')
 
     elif filtering == 'collab':
+        filtered_data = load_filtered_data()
+
         if artist_name_lower:
             match = filtered_data[
                 (filtered_data['name'].str.lower() == song_name_lower) &
@@ -123,6 +120,8 @@ def get_recommendations(song_name, artist_name, k, filtering):
         track_id_str = str(current_song['track_id'])
 
         # --- OLD ON-THE-FLY LOGIC (COMMENTED OUT) ---
+        # collab_matrix = load_collab_matrix()
+        # track_ids = load_track_ids()
         # current_song_df = match.iloc[0:1]
         # selected_artist = current_song_df['artist'].values[0]
         # recommendations = collaborative_recommendation(
@@ -143,6 +142,8 @@ def get_recommendations(song_name, artist_name, k, filtering):
             return [current_song]
 
     elif filtering == 'hybrid':
+        filtered_data = load_filtered_data()
+
         if artist_name_lower:
             match = filtered_data[
                 (filtered_data['name'].str.lower() == song_name_lower) &
