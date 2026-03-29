@@ -13,6 +13,19 @@ _track_ids = None
 _interaction_matrix = None
 _transformed_hybrid_data = None
 
+import json
+_offline_predictions = None
+
+def load_offline_predictions():
+    global _offline_predictions
+    if _offline_predictions is None:
+        try:
+            with open('offline_predictions.json', 'r', encoding='utf-8') as f:
+                _offline_predictions = json.load(f)
+        except Exception:
+            _offline_predictions = {}
+    return _offline_predictions
+
 def load_data():
     global _songs_data
     if _songs_data is None:
@@ -106,25 +119,28 @@ def get_recommendations(song_name, artist_name, k, filtering):
         if match.empty:
             raise ValueError("This song lacks user interaction data required for Collaborative Filtering.")
 
-        current_song = match.iloc[0:1]
-        selected_artist = current_song['artist'].values[0]
+        current_song = match.iloc[0:1].fillna('').to_dict(orient='records')[0]
+        track_id_str = str(current_song['track_id'])
 
-        recommendations = collaborative_recommendation(
-            song_name_lower,
-            selected_artist.lower(),
-            track_ids,
-            filtered_data,
-            collab_matrix,
-            k
-        )
+        # --- OLD ON-THE-FLY LOGIC (COMMENTED OUT) ---
+        # current_song_df = match.iloc[0:1]
+        # selected_artist = current_song_df['artist'].values[0]
+        # recommendations = collaborative_recommendation(
+        #     song_name_lower, selected_artist.lower(), track_ids, filtered_data, collab_matrix, k
+        # )
+        # recommendations = recommendations[~(
+        #     (recommendations['name'].str.lower() == current_song_df['name'].values[0].lower()) &
+        #     (recommendations['artist'].str.lower() == current_song_df['artist'].values[0].lower())
+        # )]
+        # recommendations = pd.concat([current_song_df, recommendations]).reset_index(drop=True)
+        # return recommendations.fillna('').to_dict(orient='records')
 
-        recommendations = recommendations[~(
-            (recommendations['name'].str.lower() == current_song['name'].values[0].lower()) &
-            (recommendations['artist'].str.lower() == current_song['artist'].values[0].lower())
-        )]
-
-        recommendations = pd.concat([current_song, recommendations]).reset_index(drop=True)
-        return recommendations.fillna('').to_dict(orient='records')
+        predictions = load_offline_predictions()
+        if track_id_str in predictions and 'collab' in predictions[track_id_str]:
+            recs = predictions[track_id_str]['collab'][:k]
+            return [current_song] + recs
+        else:
+            return [current_song]
 
     elif filtering == 'hybrid':
         if artist_name_lower:
@@ -140,30 +156,31 @@ def get_recommendations(song_name, artist_name, k, filtering):
         if match.empty:
             raise ValueError("This song lacks user interaction data required for the Hybrid Model.")
 
-        current_song = match.iloc[0:1]
-        selected_name = current_song['name'].values[0]
-        selected_artist = current_song['artist'].values[0]
+        current_song = match.iloc[0:1].fillna('').to_dict(orient='records')[0]
+        track_id_str = str(current_song['track_id'])
 
-        recommender = hrs(
-            song_name=selected_name,
-            artist_name=selected_artist,
-            number_of_recommendations=k,
-            weight_content_based=0.3,
-            weight_collaborative=0.7,
-            songs_data=filtered_data,
-            transformed_matrix=transformed_hybrid_data,
-            track_ids=track_ids,
-            interaction_matrix=interaction_matrix
-        )
+        # --- OLD ON-THE-FLY LOGIC (COMMENTED OUT) ---
+        # current_song_df = match.iloc[0:1]
+        # selected_name = current_song_df['name'].values[0]
+        # selected_artist = current_song_df['artist'].values[0]
+        # recommender = hrs(
+        #     song_name=selected_name, artist_name=selected_artist, number_of_recommendations=k,
+        #     weight_content_based=0.3, weight_collaborative=0.7, songs_data=filtered_data,
+        #     transformed_matrix=transformed_hybrid_data, track_ids=track_ids, interaction_matrix=interaction_matrix
+        # )
+        # recommendations = recommender.give_recommendations()
+        # recommendations = recommendations[~(
+        #     (recommendations['name'] == selected_name) &
+        #     (recommendations['artist'] == selected_artist)
+        # )]
+        # recommendations = pd.concat([current_song_df, recommendations]).reset_index(drop=True)
+        # return recommendations.fillna('').to_dict(orient='records')
 
-        recommendations = recommender.give_recommendations()
-
-        recommendations = recommendations[~(
-            (recommendations['name'] == selected_name) &
-            (recommendations['artist'] == selected_artist)
-        )]
-
-        recommendations = pd.concat([current_song, recommendations]).reset_index(drop=True)
-        return recommendations.fillna('').to_dict(orient='records')
+        predictions = load_offline_predictions()
+        if track_id_str in predictions and 'hybrid' in predictions[track_id_str]:
+            recs = predictions[track_id_str]['hybrid'][:k]
+            return [current_song] + recs
+        else:
+            return [current_song]
 
     return []
