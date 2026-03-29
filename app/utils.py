@@ -13,18 +13,44 @@ _track_ids = None
 _interaction_matrix = None
 _transformed_hybrid_data = None
 
-import json
-_offline_predictions = None
+import sqlite3
+import os
 
-def load_offline_predictions():
-    global _offline_predictions
-    if _offline_predictions is None:
-        try:
-            with open('offline_predictions.json', 'r', encoding='utf-8') as f:
-                _offline_predictions = json.load(f)
-        except Exception:
-            _offline_predictions = {}
-    return _offline_predictions
+def get_offline_recommendations(track_id_str, rec_type, filtered_data, k):
+    db_path = 'data/predictions.db'
+    if not os.path.exists(db_path):
+        return []
+
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        if rec_type == 'collab':
+            cursor.execute("SELECT collab_ids FROM predictions WHERE track_id=?", (track_id_str,))
+        else:
+            cursor.execute("SELECT hybrid_ids FROM predictions WHERE track_id=?", (track_id_str,))
+            
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row and row[0]:
+            ids = row[0].split(',')[:k]
+            # Fetch from filtered_data in order
+            recs_df = filtered_data[filtered_data['track_id'].isin(ids)].copy()
+            recs_df.set_index('track_id', inplace=True)
+            recs = []
+            for tid in ids:
+                if tid in recs_df.index:
+                    rec_data = recs_df.loc[tid]
+                    recs.append({
+                        'track_id': str(tid),
+                        'name': str(rec_data['name']),
+                        'artist': str(rec_data['artist']),
+                        'spotify_preview_url': str(rec_data['spotify_preview_url']) if pd.notna(rec_data.get('spotify_preview_url')) else ''
+                    })
+            return recs
+    except Exception as e:
+        print("SQLite error:", e)
+    return []
 
 def load_data():
     global _songs_data
@@ -134,12 +160,8 @@ def get_recommendations(song_name, artist_name, k, filtering):
         # recommendations = pd.concat([current_song_df, recommendations]).reset_index(drop=True)
         # return recommendations.fillna('').to_dict(orient='records')
 
-        predictions = load_offline_predictions()
-        if track_id_str in predictions and 'collab' in predictions[track_id_str]:
-            recs = predictions[track_id_str]['collab'][:k]
-            return [current_song] + recs
-        else:
-            return [current_song]
+        recs = get_offline_recommendations(track_id_str, 'collab', filtered_data, k)
+        return [current_song] + recs
 
     elif filtering == 'hybrid':
         filtered_data = load_filtered_data()
@@ -161,6 +183,9 @@ def get_recommendations(song_name, artist_name, k, filtering):
         track_id_str = str(current_song['track_id'])
 
         # --- OLD ON-THE-FLY LOGIC (COMMENTED OUT) ---
+        # interaction_matrix = load_interaction_matrix()
+        # transformed_hybrid_data = load_transformed_hybrid_data()
+        # track_ids = load_track_ids()
         # current_song_df = match.iloc[0:1]
         # selected_name = current_song_df['name'].values[0]
         # selected_artist = current_song_df['artist'].values[0]
@@ -177,11 +202,7 @@ def get_recommendations(song_name, artist_name, k, filtering):
         # recommendations = pd.concat([current_song_df, recommendations]).reset_index(drop=True)
         # return recommendations.fillna('').to_dict(orient='records')
 
-        predictions = load_offline_predictions()
-        if track_id_str in predictions and 'hybrid' in predictions[track_id_str]:
-            recs = predictions[track_id_str]['hybrid'][:k]
-            return [current_song] + recs
-        else:
-            return [current_song]
+        recs = get_offline_recommendations(track_id_str, 'hybrid', filtered_data, k)
+        return [current_song] + recs
 
     return []
