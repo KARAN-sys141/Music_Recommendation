@@ -60,10 +60,9 @@ def collaborative_recommendation(song_name, artist_name, track_ids, songs_data, 
         raise ValueError("Song not found in the dataset")
 
     input_track_id = song_row['track_id'].iloc[0]
-    # ind = np.where(track_ids == input_track_id)[0].item()
     inds = np.where(track_ids == input_track_id)[0]
     if len(inds) == 0:
-        return pd.DataFrame()  # ya jsonify({'error': 'Track ID not found'}), 404
+        return pd.DataFrame()
     ind = inds[0]
 
     input_array = interaction_matrix[ind]

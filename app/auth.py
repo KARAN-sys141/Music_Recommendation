@@ -25,7 +25,6 @@ def register():
     db.session.add(new_user)
     db.session.commit()
     
-    # Create default playlist
     default_playlist = Playlist(name="Liked Songs", user_id=new_user.id)
     db.session.add(default_playlist)
     db.session.commit()

@@ -47,7 +47,6 @@ def main():
     track_id_to_matrix_idx = {tid: idx for idx, tid in enumerate(track_ids)}
     songs_m_indices = np.array([track_id_to_matrix_idx.get(tid, -1) for tid in songs_data['track_id']])
     
-    # Initialize SQLite DB
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
@@ -90,7 +89,6 @@ def main():
         for i, df_idx in enumerate(range(start_idx, end_idx)):
             input_track_id_str = songs_dicts[df_idx]['track_id_str']
             
-            # Collab predictions
             collab_ids = []
             if batch_m_indices[i] != -1:
                 c_scores = collab_sim_norm[i]
@@ -98,7 +96,6 @@ def main():
                 c_indices = [idx for idx in c_indices if idx != df_idx][:K]
                 collab_ids = [str(songs_dicts[idx]['track_id']) for idx in c_indices]
                     
-            # Hybrid predictions
             h_scores = weighted_scores[i]
             h_indices = np.argsort(h_scores)[-(K+1):][::-1]
             h_indices = [idx for idx in h_indices if idx != df_idx][:K]

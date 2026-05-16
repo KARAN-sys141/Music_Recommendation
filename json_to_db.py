@@ -15,11 +15,9 @@ def main():
         return
 
     print("Connecting to SQLite database...")
-    # Connect to (or create) the database
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Create table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS predictions (
             track_id TEXT PRIMARY KEY,
@@ -28,13 +26,10 @@ def main():
         )
     ''')
 
-    # Clear existing data just in case
     cursor.execute('DELETE FROM predictions')
 
     print("Inserting data into database...")
     
-    # Prepare data for bulk insert
-    # data is expected to be dict: { "track_id_string": { "collab": [...], "hybrid": [...] } }
     insert_records = []
     for track_id, preds in data.items():
         collab_str = json.dumps(preds.get('collab', []))
@@ -53,7 +48,6 @@ def main():
     print(f"Successfully converted! Database created at {DB_PATH}")
     print(f"Database size: {db_size_mb:.2f} MB")
     
-    # Delete the large JSON file to save space and prevent accidental commits
     print(f"Removing {JSON_PATH} to save space...")
     try:
         os.remove(JSON_PATH)

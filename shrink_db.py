@@ -3,10 +3,6 @@ import sqlite3
 import os
 import pandas as pd
 
-# The original json was deleted, let's regenerate it or wait, I deleted it!
-# Wait! I deleted offline_predictions.json!
-# I have the db `data/predictions.db` which is 135MB. 
-# I will read from the DB, shrink the data, and write to a smaller DB, then replace the original DB.
 
 DB_PATH = 'data/predictions.db'
 NEW_DB_PATH = 'data/predictions_compact.db'
@@ -39,7 +35,6 @@ def main():
         collab_recs = json.loads(row[1]) if row[1] else []
         hybrid_recs = json.loads(row[2]) if row[2] else []
         
-        # Extract just the track_ids
         collab_ids = ",".join([c['track_id'] for c in collab_recs])
         hybrid_ids = ",".join([h['track_id'] for h in hybrid_recs])
         

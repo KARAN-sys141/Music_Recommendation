@@ -34,7 +34,6 @@ def get_offline_recommendations(track_id_str, rec_type, filtered_data, k):
         
         if row and row[0]:
             ids = row[0].split(',')[:k]
-            # Fetch from filtered_data in order
             recs_df = filtered_data[filtered_data['track_id'].isin(ids)].copy()
             recs_df.set_index('track_id', inplace=True)
             recs = []
@@ -145,21 +144,6 @@ def get_recommendations(song_name, artist_name, k, filtering):
         current_song = match.iloc[0:1].fillna('').to_dict(orient='records')[0]
         track_id_str = str(current_song['track_id'])
 
-        # --- OLD ON-THE-FLY LOGIC (COMMENTED OUT) ---
-        # collab_matrix = load_collab_matrix()
-        # track_ids = load_track_ids()
-        # current_song_df = match.iloc[0:1]
-        # selected_artist = current_song_df['artist'].values[0]
-        # recommendations = collaborative_recommendation(
-        #     song_name_lower, selected_artist.lower(), track_ids, filtered_data, collab_matrix, k
-        # )
-        # recommendations = recommendations[~(
-        #     (recommendations['name'].str.lower() == current_song_df['name'].values[0].lower()) &
-        #     (recommendations['artist'].str.lower() == current_song_df['artist'].values[0].lower())
-        # )]
-        # recommendations = pd.concat([current_song_df, recommendations]).reset_index(drop=True)
-        # return recommendations.fillna('').to_dict(orient='records')
-
         recs = get_offline_recommendations(track_id_str, 'collab', filtered_data, k)
         return [current_song] + recs
 
@@ -181,26 +165,6 @@ def get_recommendations(song_name, artist_name, k, filtering):
 
         current_song = match.iloc[0:1].fillna('').to_dict(orient='records')[0]
         track_id_str = str(current_song['track_id'])
-
-        # --- OLD ON-THE-FLY LOGIC (COMMENTED OUT) ---
-        # interaction_matrix = load_interaction_matrix()
-        # transformed_hybrid_data = load_transformed_hybrid_data()
-        # track_ids = load_track_ids()
-        # current_song_df = match.iloc[0:1]
-        # selected_name = current_song_df['name'].values[0]
-        # selected_artist = current_song_df['artist'].values[0]
-        # recommender = hrs(
-        #     song_name=selected_name, artist_name=selected_artist, number_of_recommendations=k,
-        #     weight_content_based=0.3, weight_collaborative=0.7, songs_data=filtered_data,
-        #     transformed_matrix=transformed_hybrid_data, track_ids=track_ids, interaction_matrix=interaction_matrix
-        # )
-        # recommendations = recommender.give_recommendations()
-        # recommendations = recommendations[~(
-        #     (recommendations['name'] == selected_name) &
-        #     (recommendations['artist'] == selected_artist)
-        # )]
-        # recommendations = pd.concat([current_song_df, recommendations]).reset_index(drop=True)
-        # return recommendations.fillna('').to_dict(orient='records')
 
         recs = get_offline_recommendations(track_id_str, 'hybrid', filtered_data, k)
         return [current_song] + recs

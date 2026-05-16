@@ -9,11 +9,8 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def home():
-    # Load data
     df = load_data()
     
-    # Get top unique artists (let's say we grab artists that appear frequently, or just a random set for discovery)
-    # For a deterministic "top" we could count values, but lets just grab a chunk of unique artists
     artists_series = df['artist'].value_counts().head(50).index.tolist()
     
     return render_template('artists.html', artists=artists_series)
@@ -21,7 +18,6 @@ def home():
 @main_bp.route('/artist/<artist_name>')
 def artist_detail(artist_name):
     df = load_data()
-    # Filter songs by artist
     artist_songs = df[df['artist'].str.lower() == artist_name.lower()].copy()
     
     if artist_songs.empty:
@@ -40,7 +36,6 @@ def song_detail(track_id):
         
     song_dict = song.iloc[0].to_dict()
     
-    # Passing the exact audio features
     features = {
         'danceability': song_dict.get('danceability', 0) * 100,
         'energy': song_dict.get('energy', 0) * 100,

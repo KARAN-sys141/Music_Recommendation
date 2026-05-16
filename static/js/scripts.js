@@ -1,4 +1,3 @@
-// Audio Player State
 const audio = document.getElementById('audioPlayer');
 const mainPlayBtn = document.getElementById('mainPlayBtn');
 const progressBarFill = document.getElementById('progressBarFill');
@@ -7,12 +6,10 @@ const durationEl = document.getElementById('duration');
 const volBarFill = document.getElementById('volBarFill');
 
 let currentPreviewUrl = null;
-let _activeCardBtn = null; // currently highlighted card play button
+let _activeCardBtn = null;
 
-// Default placeholder artwork
 const defaultArt = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600"><rect width="600" height="600" fill="%231a0e36"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="200" fill="%23b388ff">🎵</text></svg>`;
 
-// Audio Event Listeners
 audio.addEventListener('timeupdate', () => {
   if (audio.duration) {
     const percent = (audio.currentTime / audio.duration) * 100;
@@ -65,13 +62,10 @@ function playTrack(previewUrl, title, artist, artUrl, cardBtn = null) {
     return;
   }
 
-  // Reset any previously active card button
   _resetCardBtn();
 
   if (currentPreviewUrl === previewUrl) {
-    // Same song — toggle play/pause
     togglePlay();
-    // Re-attach btn since _resetCardBtn cleared it
     _activeCardBtn = cardBtn || null;
     return;
   }
@@ -87,7 +81,6 @@ function playTrack(previewUrl, title, artist, artUrl, cardBtn = null) {
   audio.play();
   mainPlayBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
 
-  // Update card button icon
   if (cardBtn) {
     _activeCardBtn = cardBtn;
     _activeCardBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
@@ -124,7 +117,6 @@ async function fetchAlbumArt(songName, artistName) {
   return defaultArt;
 }
 
-// Auth State & UI
 document.addEventListener('DOMContentLoaded', async () => {
   const authContainer = document.getElementById('authContainer');
   if (authContainer) {
@@ -161,7 +153,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Global Search Logic
   const searchInput = document.getElementById('globalSearch');
   const searchResults = document.getElementById('searchResults');
   let searchTimeout = null;
@@ -196,7 +187,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </a>
                         `).join('');
 
-            // Queue images
             data.forEach(item => {
               ImageQueue.add(async () => {
                 const url = await fetchAlbumArt(item.name, item.artist);
@@ -212,7 +202,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 300);
     });
 
-    // Hide on outside click
     document.addEventListener('click', (e) => {
       if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
         searchResults.style.display = 'none';
@@ -276,7 +265,6 @@ document.addEventListener('click', () => {
   if (menu) menu.style.display = 'none';
 });
 
-// Global Image Fetching Queue to prevent iTunes API rejection (429 Too Many Requests)
 const ImageQueue = {
   queue: [],
   isProcessing: false,
@@ -298,7 +286,6 @@ const ImageQueue = {
       await task();
     } catch (e) { }
 
-    // Delay 150ms between requests
     setTimeout(() => this.process(), 200);
   }
 };
